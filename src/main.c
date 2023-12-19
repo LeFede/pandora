@@ -6,14 +6,15 @@
 // #include <time.h>
 // #include <stdlib.h>
 
+#define LAYERS 3
+
 typedef struct Map {
   Texture2D tileset;
-  Texture2D layers[3];
-  Vector2 tileset_size;
-  Vector2 layers_size[3];
-  RenderTexture2D render_textures[3];
+  Texture2D layers[LAYERS];
+  RenderTexture2D render_textures[LAYERS];
   char zoom;
   char pixel_per_tile;
+  char current;
 } Map;
 
 
@@ -183,64 +184,58 @@ Map        map;
 #define  LAYER_5 "assets/textures/layer_5.png"  
 #define  LAYER_6 "assets/textures/layer_6.png"  
 
+void clear_map() 
+{
+  UnloadTexture(map.tileset);
+  for(short i = 0; i < LAYERS; i++)
+    UnloadTexture(map.layers[i]);
+}
+
 #define scene_2 do {\
   \
+  clear_map();\
   map.pixel_per_tile = 16;\
   map.zoom = 3;\
+  map.current = 2;\
   \
   map.tileset   = LoadTexture(TILE_1);\
   map.layers[0] = LoadTexture(LAYER_3);\
   map.layers[1] = LoadTexture(LAYER_4);\
   map.layers[2] = LoadTexture(LAYER_6);\
   \
-  map.tileset_size   = (Vector2){ 368, 128 };\
-  map.layers_size[0] = (Vector2){  40,  20 };\
-  map.layers_size[1] = (Vector2){  40,  20 };\
-  map.layers_size[2] = (Vector2){  40,  20 };\
-  \
   map.render_textures[0] = LoadRenderTexture(\
-    map.layers_size[0].x * map.zoom * map.pixel_per_tile,\
-    map.layers_size[0].y * map.zoom * map.pixel_per_tile\
+    map.layers[0].width * map.zoom * map.pixel_per_tile,\
+    map.layers[0].height * map.zoom * map.pixel_per_tile\
   );\
   \
-  map.render_textures[1] = LoadRenderTexture(\
-    map.layers_size[1].x * map.zoom * map.pixel_per_tile,\
-    map.layers_size[1].y * map.zoom * map.pixel_per_tile\
-  );\
-  map.render_textures[2] = LoadRenderTexture(\
-    map.layers_size[2].x * map.zoom * map.pixel_per_tile,\
-    map.layers_size[2].y * map.zoom * map.pixel_per_tile\
-  );\
+  for(short i = 0; i < LAYERS; i++)\
+  {\
+    map.render_textures[i] = LoadRenderTexture(\
+      map.layers[i].width * map.zoom * map.pixel_per_tile,\
+      map.layers[i].height * map.zoom * map.pixel_per_tile\
+    );\
+  }\
 } while(0)
 
 #define scene_3 do {\
   \
+  clear_map();\
   map.pixel_per_tile = 16;\
   map.zoom = 3;\
+  map.current = 3;\
   \
   map.tileset   = LoadTexture(TILE_1);\
   map.layers[0] = LoadTexture(LAYER_3);\
   map.layers[1] = LoadTexture(LAYER_4);\
   map.layers[2] = LoadTexture(LAYER_5);\
   \
-  map.tileset_size   = (Vector2){ 368, 128 };\
-  map.layers_size[0] = (Vector2){  40,  20 };\
-  map.layers_size[1] = (Vector2){  40,  20 };\
-  map.layers_size[2] = (Vector2){  40,  20 };\
-  \
-  map.render_textures[0] = LoadRenderTexture(\
-    map.layers_size[0].x * map.zoom * map.pixel_per_tile,\
-    map.layers_size[0].y * map.zoom * map.pixel_per_tile\
-  );\
-  \
-  map.render_textures[1] = LoadRenderTexture(\
-    map.layers_size[1].x * map.zoom * map.pixel_per_tile,\
-    map.layers_size[1].y * map.zoom * map.pixel_per_tile\
-  );\
-  map.render_textures[2] = LoadRenderTexture(\
-    map.layers_size[2].x * map.zoom * map.pixel_per_tile,\
-    map.layers_size[2].y * map.zoom * map.pixel_per_tile\
-  );\
+  for(short i = 0; i < LAYERS; i++)\
+  {\
+    map.render_textures[i] = LoadRenderTexture(\
+      map.layers[i].width * map.zoom * map.pixel_per_tile,\
+      map.layers[i].height * map.zoom * map.pixel_per_tile\
+    );\
+  }\
 } while(0)
 
 
@@ -278,17 +273,17 @@ int main()
       ClearBackground(BACKGROUND_DEFAULT_COLOR);
       BeginMode2D(cam);
 
-      for (int i = 0; i < 3; i++)
+      for (int i = 0; i < LAYERS; i++)
       {
         BeginShaderMode(shader);
           SetShaderValueTexture(shader, texLocation1, map.tileset);
           SetShaderValueTexture(shader, texLocation2, map.layers[i]);
           SetShaderValue(shader, tileSizesLocation, 
             &(Vector4){ 
-              map.layers_size[i].x, 
-              map.layers_size[i].y, 
-              map.tileset_size.x, 
-              map.tileset_size.y
+              map.layers[i].width, 
+              map.layers[i].height, 
+              map.tileset.width, 
+              map.tileset.height
             }, 
             SHADER_UNIFORM_VEC4
           );
@@ -297,8 +292,8 @@ int main()
             (Rectangle) { 
               0, 
               0, 
-              map.layers_size[i].x * map.zoom * map.pixel_per_tile, 
-              map.layers_size[i].y * map.zoom * map.pixel_per_tile
+              map.layers[i].width * map.zoom * map.pixel_per_tile, 
+              map.layers[i].height * map.zoom * map.pixel_per_tile
             }, 
             (Vector2) { 0, 0 }, WHITE
           );
@@ -306,7 +301,6 @@ int main()
       }
 
       draw();
-      DrawRectangle(16 * map.pixel_per_tile * map.zoom, 9 * map.pixel_per_tile * map.zoom, 16 * map.zoom, 16 * map.zoom, WHITE);
 
       EndMode2D();
       DrawFPS(5, 5);
@@ -327,6 +321,14 @@ int main()
         24.F, 
         WHITE
       );
+
+      DrawText(
+        TextFormat("CURRENT_MAP=%d", map.current), 
+        1., 
+        GetScreenHeight() - (24.F * 3.F), 
+        24.F, 
+        WHITE
+      );
       // UI
 
     EndDrawing();
@@ -334,9 +336,7 @@ int main()
 
 
   // Unload
-  UnloadTexture(map.tileset);
-  UnloadTexture(map.layers[0]);
-  UnloadTexture(map.layers[1]);
+  clear_map();
   UnloadSound(sound);
   UnloadMusicStream(music);
   UnloadFont(fonts[0]);
