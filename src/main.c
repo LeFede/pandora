@@ -8,8 +8,8 @@
 
 #define BACKGROUND_DEFAULT_COLOR (Color){71, 102, 143, 255}
 
-#define  SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+#define  SCREEN_WIDTH 1280 
+#define SCREEN_HEIGHT 720  
 #define  SCREEN_TITLE "HOLA"
 
 #define MAX_ENTITIES     256  //(1 << (sizeof(unit) * 8)) - 1
@@ -27,23 +27,29 @@ typedef signed short i16;
 typedef signed int   i32;
 typedef signed long  i64;
 
-enum Flags {
+enum Flags
+{
   ACTIVE    = 1 << 0,
   KINETIC   = 1 << 1,
   SPRITE    = 1 << 2,
 };
 
-enum Types {
+enum Types
+{
   HUMAN    = 0,
   SKELETON = 1,
+  GOBLIN   = 2,
+  ELF      = 3,
 };
 
-enum Colors {
-  cGreen = 0,
-  cRed   = 1,
-  cBlue  = 2,
-  cViolet = 3
+enum Colors 
+{
+  cGreen  = 0,
+  cRed    = 1,
+  cBlue   = 2,
+  cViolet = 3,
 };
+
 
 Color colors[] = { GREEN, RED, BLUE, VIOLET};
 
@@ -74,8 +80,8 @@ i32 starting_stats[TOTAL_ENTITIES][TOTAL_COMPONENTS] =
 {
   {   20,  20, 10, 10,  100,    0,  cGreen, ACTIVE | KINETIC | SPRITE }, // HUMAN
   {   50,  20, 10, 10,    0,  100,   cBlue, ACTIVE | KINETIC | SPRITE }, // SKELETON
-  { 1000,  20, 10, 10, -100,  200, cViolet, ACTIVE | KINETIC | SPRITE }, // Violet
-  { 1000, 700, 10, 10, -100, -100,    cRed, ACTIVE | KINETIC | SPRITE }, // Red
+  { 1000,  20, 10, 10, -100,  200, cViolet, ACTIVE | KINETIC | SPRITE }, // GOBLIN
+  { 1000, 700, 10, 10, -100, -100,    cRed, ACTIVE | KINETIC | SPRITE }, // ELF
 };
 
 void clean_entities() 
@@ -97,7 +103,8 @@ void clean_entities()
 
 unit destroy_entity(unit id)
 {
-  if (_flags[id] & ACTIVE) {
+  if (_flags[id] & ACTIVE)
+  {
     _flags[id] &= ~ACTIVE;
     // LAST_FREE_INDEX = id;
 
@@ -132,7 +139,7 @@ unit add_entity(unit type)
   _vx       [LAST_FREE_INDEX] =  starting_stats[type][4];
   _vy       [LAST_FREE_INDEX] =  starting_stats[type][5];
   _color    [LAST_FREE_INDEX] =  colors[starting_stats[type][6]];
-  _flags    [LAST_FREE_INDEX] |= starting_stats[type][7];
+  _flags    [LAST_FREE_INDEX] =  starting_stats[type][7];
   _type     [LAST_FREE_INDEX] =  type;
 
   last_entity_added = LAST_FREE_INDEX;
@@ -144,9 +151,36 @@ unit add_entity(unit type)
   return LAST_FREE_INDEX++;
 }
 
-Sound sound;
-Music music;
-Font fonts[3];
+Sound    sound;
+Music    music;
+Font  fonts[3];
+Texture2D tiles[3];
+Vector4 tileSizes[2];
+RenderTexture2D textures[2];
+
+#define  MUSIC_1 "assets/music/1.mp3"
+#define  MUSIC_2 "assets/music/2.mp3"
+#define  SOUND_1 "assets/sounds/1.wav"
+#define   FONT_1 "assets/fonts/1.ttf"
+#define SHADER_1 "assets/shaders/test.frag"
+#define   TILE_1 "assets/textures/tiles_packed3.png"
+#define    MAP_1 "assets/textures/actual_map3.png"  
+#define    MAP_2 "assets/textures/actual_map2.png"  
+
+#define scene1 do       \
+{                       \
+  clean_entities();     \
+  add_entity(HUMAN);    \
+  add_entity(SKELETON); \
+  printf("\nxd!!\n");   \
+} while(0)
+
+#define scene2 do {     \
+  clean_entities();     \
+  add_entity(GOBLIN);   \
+  add_entity(ELF);      \
+  printf("\nxd!!\n");   \
+} while(0)
 
 int main()
 {
@@ -154,36 +188,39 @@ int main()
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE);
   InitAudioDevice();
 
-  sound = LoadSound("assets/sounds/1.wav");
-  music = LoadMusicStream("assets/music/1.mp3");
+  sound = LoadSound(SOUND_1);
+  music = LoadMusicStream(MUSIC_1);
 
   SetMusicVolume(music, .1);
   PlayMusicStream(music);
 
-  fonts[0] = LoadFont("assets/fonts/1.ttf");
-  fonts[1] = LoadFont("assets/fonts/2.ttf");
+  fonts[0] = LoadFont(FONT_1);
+  // fonts[1] = LoadFont("assets/fonts/2.ttf");
 
   cam.zoom = 1.;
 
   printf("\n");
+  
+  tiles[0] = LoadTexture(TILE_1);
+  tiles[1] = LoadTexture(MAP_1);
+  tiles[2] = LoadTexture(MAP_2);
 
-  Texture2D tiles[] = {
-    LoadTexture("assets/textures/tiles_packed3.png"),
-    LoadTexture("assets/textures/actual_map3.png"  ),
-    LoadTexture("assets/textures/actual_map2.png"  ),
-  };
+  tileSizes[0] = (Vector4){ 20,  8, 368, 128 };
+  tileSizes[1] = (Vector4){ 30, 30, 368, 128 };
 
-  Vector4 tile_sizes  = (Vector4){ 20,  8, 368, 128 };
-  Vector4 tile_sizes2 = (Vector4){ 30, 30, 368, 128 };
+  int zoom = 5 * 16;
 
-  float   tex_width =  tile_sizes.x * (1 << 6);
-  float  tex_height =  tile_sizes.y * (1 << 6);
-  // float  tex_width2 = tile_sizes2.x * (1 << 6);
-  // float tex_height2 = tile_sizes2.y * (1 << 6);
+  textures[0] = LoadRenderTexture(
+    tileSizes[0].x * zoom, 
+    tileSizes[0].y * zoom
+  );
 
-  RenderTexture2D  tex = LoadRenderTexture(tex_width, tex_height);
-  // RenderTexture2D tex2 = LoadRenderTexture(tex_width2, tex_height2);
-  Shader        shader = LoadShader(0, TextFormat("assets/shaders/test.frag"));
+  textures[1] = LoadRenderTexture(
+    tileSizes[1].x * zoom, 
+    tileSizes[1].y * zoom
+  );
+
+  Shader        shader = LoadShader(0, SHADER_1);
 
   int      texLocation1 = GetShaderLocation(shader, "texture1");
   int      texLocation2 = GetShaderLocation(shader, "texture2");
@@ -200,35 +237,52 @@ int main()
       BeginShaderMode(shader);
         SetShaderValueTexture(shader, texLocation1, tiles[0]);
         SetShaderValueTexture(shader, texLocation2, tiles[1]);
-        SetShaderValue(shader, tileSizesLocation, &tile_sizes, SHADER_UNIFORM_VEC4);
-        DrawTextureRec(tex.texture, (Rectangle) { 0, 0, tex_width, tex_height}, (Vector2) { 0, 0 }, WHITE);
+        SetShaderValue(shader, tileSizesLocation, &tileSizes[0], SHADER_UNIFORM_VEC4);
+        DrawTextureRec(
+          textures[0].texture, 
+          (Rectangle) { 
+            0, 
+            0, 
+            tileSizes[0].x * zoom, 
+            tileSizes[0].y * zoom
+          }, 
+          (Vector2) { 0, 0 }, WHITE
+        );
       EndShaderMode();
 
-      // BeginShaderMode(shader);
-        // SetShaderValueTexture(shader, texLocation1, tiles[0]);
-        // SetShaderValueTexture(shader, texLocation2, tiles[2]);
-        // SetShaderValue(shader, tileSizesLocation, &tile_sizes2, SHADER_UNIFORM_VEC4);
-        // DrawTextureRec(tex2.texture, (Rectangle) { 0, 0, tex_width2, tex_height2}, (Vector2) { 0, 0 }, WHITE);
-      // EndShaderMode();
+      BeginShaderMode(shader);
+        SetShaderValueTexture(shader, texLocation1, tiles[0]);
+        SetShaderValueTexture(shader, texLocation2, tiles[2]);
+        SetShaderValue(shader, tileSizesLocation, &tileSizes[1], SHADER_UNIFORM_VEC4);
+        DrawTextureRec(
+          textures[1].texture, 
+          (Rectangle) { 
+            0, 
+            0, 
+            tileSizes[1].x * zoom, 
+            tileSizes[1].y * zoom
+          }, 
+          (Vector2) { 0, 0 }, WHITE
+        );
+      EndShaderMode();
 
       game_loop();
 
       EndMode2D();
       DrawFPS(5, 5);
 
-
-      // text_ui("Hola", 0);
-      // text_ui("probando", 1);
-      // text_ui("more", 2);
-      // text_ui("and more", 3);
+      // UI
       DrawText(TextFormat("ACTIVE_ENTITIES=%d", ACTIVE_ENTITIES), 1., GetScreenHeight() - 24.F, 24.F, WHITE);
       DrawText(TextFormat("LAST_FREE_INDEX=%d", LAST_FREE_INDEX), 1., GetScreenHeight() - (24.F * 2.F), 24.F, WHITE);
+      // UI
 
     EndDrawing();
   }
 
 
   // Unload
+  UnloadRenderTexture(textures[0]);
+  UnloadRenderTexture(textures[1]);
   UnloadTexture(tiles[0]);
   UnloadTexture(tiles[1]);
   UnloadTexture(tiles[2]);
@@ -243,10 +297,9 @@ int main()
   return 0;
 }
 
-void game_loop() 
+void game_loop()
 {
   UpdateMusicStream(music);
-
 
   for (unit i = 1; i <= last_entity; i++) 
   {
@@ -267,6 +320,17 @@ void game_loop()
 
 void input()
 {
+
+  if (IsKeyPressed(KEY_T))
+  {
+    scene1;
+  }
+
+  if (IsKeyPressed(KEY_R))
+  {
+    scene2;
+  }
+
   if (IsKeyDown(KEY_C))
   {
     add_entity(rand() % TOTAL_ENTITIES);
