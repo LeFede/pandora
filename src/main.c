@@ -6,7 +6,19 @@
 // #include <time.h>
 // #include <stdlib.h>
 
-#define BACKGROUND_DEFAULT_COLOR (Color){71, 102, 143, 255}
+typedef struct Map {
+  Texture2D tileset;
+  Texture2D layers[3];
+  Vector2 tileset_size;
+  Vector2 layers_size[3];
+  RenderTexture2D render_textures[3];
+  char zoom;
+  char pixel_per_tile;
+} Map;
+
+
+// #define BACKGROUND_DEFAULT_COLOR (Color){  71, 102, 143, 255 }
+#define BACKGROUND_DEFAULT_COLOR (Color){ 255,   0,   0, 255 }
 
 #define  SCREEN_WIDTH 1280 
 #define SCREEN_HEIGHT 720  
@@ -55,6 +67,8 @@ Color colors[] = { GREEN, RED, BLUE, VIOLET};
 
 void input();
 void game_loop();
+void draw();
+
 // Components
 u32       _x [MAX_ENTITIES]; // TRANSFORM
 u32       _y [MAX_ENTITIES]; // TRANFORM
@@ -154,33 +168,81 @@ unit add_entity(unit type)
 Sound    sound;
 Music    music;
 Font  fonts[3];
-Texture2D tiles[3];
-Vector4 tileSizes[2];
-RenderTexture2D textures[2];
+Map        map;
 
 #define  MUSIC_1 "assets/music/1.mp3"
 #define  MUSIC_2 "assets/music/2.mp3"
 #define  SOUND_1 "assets/sounds/1.wav"
 #define   FONT_1 "assets/fonts/1.ttf"
 #define SHADER_1 "assets/shaders/test.frag"
-#define   TILE_1 "assets/textures/tiles_packed3.png"
-#define    MAP_1 "assets/textures/actual_map3.png"  
-#define    MAP_2 "assets/textures/actual_map2.png"  
+#define   TILE_1 "assets/textures/tileset_1.png"
+#define  LAYER_1 "assets/textures/layer_1.png"  
+#define  LAYER_2 "assets/textures/layer_2.png"  
+#define  LAYER_3 "assets/textures/layer_3.png"  
+#define  LAYER_4 "assets/textures/layer_4.png"  
+#define  LAYER_5 "assets/textures/layer_5.png"  
+#define  LAYER_6 "assets/textures/layer_6.png"  
 
-#define scene1 do       \
-{                       \
-  clean_entities();     \
-  add_entity(HUMAN);    \
-  add_entity(SKELETON); \
-  printf("\nxd!!\n");   \
+#define scene_2 do {\
+  \
+  map.pixel_per_tile = 16;\
+  map.zoom = 3;\
+  \
+  map.tileset   = LoadTexture(TILE_1);\
+  map.layers[0] = LoadTexture(LAYER_3);\
+  map.layers[1] = LoadTexture(LAYER_4);\
+  map.layers[2] = LoadTexture(LAYER_6);\
+  \
+  map.tileset_size   = (Vector2){ 368, 128 };\
+  map.layers_size[0] = (Vector2){  40,  20 };\
+  map.layers_size[1] = (Vector2){  40,  20 };\
+  map.layers_size[2] = (Vector2){  40,  20 };\
+  \
+  map.render_textures[0] = LoadRenderTexture(\
+    map.layers_size[0].x * map.zoom * map.pixel_per_tile,\
+    map.layers_size[0].y * map.zoom * map.pixel_per_tile\
+  );\
+  \
+  map.render_textures[1] = LoadRenderTexture(\
+    map.layers_size[1].x * map.zoom * map.pixel_per_tile,\
+    map.layers_size[1].y * map.zoom * map.pixel_per_tile\
+  );\
+  map.render_textures[2] = LoadRenderTexture(\
+    map.layers_size[2].x * map.zoom * map.pixel_per_tile,\
+    map.layers_size[2].y * map.zoom * map.pixel_per_tile\
+  );\
 } while(0)
 
-#define scene2 do {     \
-  clean_entities();     \
-  add_entity(GOBLIN);   \
-  add_entity(ELF);      \
-  printf("\nxd!!\n");   \
+#define scene_3 do {\
+  \
+  map.pixel_per_tile = 16;\
+  map.zoom = 3;\
+  \
+  map.tileset   = LoadTexture(TILE_1);\
+  map.layers[0] = LoadTexture(LAYER_3);\
+  map.layers[1] = LoadTexture(LAYER_4);\
+  map.layers[2] = LoadTexture(LAYER_5);\
+  \
+  map.tileset_size   = (Vector2){ 368, 128 };\
+  map.layers_size[0] = (Vector2){  40,  20 };\
+  map.layers_size[1] = (Vector2){  40,  20 };\
+  map.layers_size[2] = (Vector2){  40,  20 };\
+  \
+  map.render_textures[0] = LoadRenderTexture(\
+    map.layers_size[0].x * map.zoom * map.pixel_per_tile,\
+    map.layers_size[0].y * map.zoom * map.pixel_per_tile\
+  );\
+  \
+  map.render_textures[1] = LoadRenderTexture(\
+    map.layers_size[1].x * map.zoom * map.pixel_per_tile,\
+    map.layers_size[1].y * map.zoom * map.pixel_per_tile\
+  );\
+  map.render_textures[2] = LoadRenderTexture(\
+    map.layers_size[2].x * map.zoom * map.pixel_per_tile,\
+    map.layers_size[2].y * map.zoom * map.pixel_per_tile\
+  );\
 } while(0)
+
 
 int main()
 {
@@ -200,25 +262,6 @@ int main()
   cam.zoom = 1.;
 
   printf("\n");
-  
-  tiles[0] = LoadTexture(TILE_1);
-  tiles[1] = LoadTexture(MAP_1);
-  tiles[2] = LoadTexture(MAP_2);
-
-  tileSizes[0] = (Vector4){ 20,  8, 368, 128 };
-  tileSizes[1] = (Vector4){ 30, 30, 368, 128 };
-
-  int zoom = 5 * 16;
-
-  textures[0] = LoadRenderTexture(
-    tileSizes[0].x * zoom, 
-    tileSizes[0].y * zoom
-  );
-
-  textures[1] = LoadRenderTexture(
-    tileSizes[1].x * zoom, 
-    tileSizes[1].y * zoom
-  );
 
   Shader        shader = LoadShader(0, SHADER_1);
 
@@ -229,51 +272,61 @@ int main()
 
   while (!WindowShouldClose()) {
     input();
+    game_loop();
 
     BeginDrawing();
       ClearBackground(BACKGROUND_DEFAULT_COLOR);
       BeginMode2D(cam);
 
-      BeginShaderMode(shader);
-        SetShaderValueTexture(shader, texLocation1, tiles[0]);
-        SetShaderValueTexture(shader, texLocation2, tiles[1]);
-        SetShaderValue(shader, tileSizesLocation, &tileSizes[0], SHADER_UNIFORM_VEC4);
-        DrawTextureRec(
-          textures[0].texture, 
-          (Rectangle) { 
-            0, 
-            0, 
-            tileSizes[0].x * zoom, 
-            tileSizes[0].y * zoom
-          }, 
-          (Vector2) { 0, 0 }, WHITE
-        );
-      EndShaderMode();
+      for (int i = 0; i < 3; i++)
+      {
+        BeginShaderMode(shader);
+          SetShaderValueTexture(shader, texLocation1, map.tileset);
+          SetShaderValueTexture(shader, texLocation2, map.layers[i]);
+          SetShaderValue(shader, tileSizesLocation, 
+            &(Vector4){ 
+              map.layers_size[i].x, 
+              map.layers_size[i].y, 
+              map.tileset_size.x, 
+              map.tileset_size.y
+            }, 
+            SHADER_UNIFORM_VEC4
+          );
+          DrawTextureRec(
+            map.render_textures[i].texture, 
+            (Rectangle) { 
+              0, 
+              0, 
+              map.layers_size[i].x * map.zoom * map.pixel_per_tile, 
+              map.layers_size[i].y * map.zoom * map.pixel_per_tile
+            }, 
+            (Vector2) { 0, 0 }, WHITE
+          );
+        EndShaderMode();
+      }
 
-      BeginShaderMode(shader);
-        SetShaderValueTexture(shader, texLocation1, tiles[0]);
-        SetShaderValueTexture(shader, texLocation2, tiles[2]);
-        SetShaderValue(shader, tileSizesLocation, &tileSizes[1], SHADER_UNIFORM_VEC4);
-        DrawTextureRec(
-          textures[1].texture, 
-          (Rectangle) { 
-            0, 
-            0, 
-            tileSizes[1].x * zoom, 
-            tileSizes[1].y * zoom
-          }, 
-          (Vector2) { 0, 0 }, WHITE
-        );
-      EndShaderMode();
-
-      game_loop();
+      draw();
+      DrawRectangle(16 * map.pixel_per_tile * map.zoom, 9 * map.pixel_per_tile * map.zoom, 16 * map.zoom, 16 * map.zoom, WHITE);
 
       EndMode2D();
       DrawFPS(5, 5);
 
       // UI
-      DrawText(TextFormat("ACTIVE_ENTITIES=%d", ACTIVE_ENTITIES), 1., GetScreenHeight() - 24.F, 24.F, WHITE);
-      DrawText(TextFormat("LAST_FREE_INDEX=%d", LAST_FREE_INDEX), 1., GetScreenHeight() - (24.F * 2.F), 24.F, WHITE);
+      DrawText(
+        TextFormat("ACTIVE_ENTITIES=%d", ACTIVE_ENTITIES),
+        2., 
+        GetScreenHeight() - 24.F, 
+        24.F, 
+        WHITE
+      );
+
+      DrawText(
+        TextFormat("LAST_FREE_INDEX=%d", LAST_FREE_INDEX), 
+        1., 
+        GetScreenHeight() - (24.F * 2.F), 
+        24.F, 
+        WHITE
+      );
       // UI
 
     EndDrawing();
@@ -281,15 +334,14 @@ int main()
 
 
   // Unload
-  UnloadRenderTexture(textures[0]);
-  UnloadRenderTexture(textures[1]);
-  UnloadTexture(tiles[0]);
-  UnloadTexture(tiles[1]);
-  UnloadTexture(tiles[2]);
+  UnloadTexture(map.tileset);
+  UnloadTexture(map.layers[0]);
+  UnloadTexture(map.layers[1]);
   UnloadSound(sound);
   UnloadMusicStream(music);
   UnloadFont(fonts[0]);
   UnloadFont(fonts[1]);
+  UnloadShader(shader);
 
   // Close
   CloseAudioDevice();
@@ -311,6 +363,19 @@ void game_loop()
       _y[i] += _vy[i] * GetFrameTime();
     }
 
+    // if (_flags[i] & SPRITE) 
+    // {
+    //   DrawRectangle(_x[i], _y[i], _w[i], _h[i], _color[i]);
+    // }
+  }
+}
+
+void draw()
+{
+  for (unit i = 1; i <= last_entity; i++) 
+  {
+    if (!(_flags[i] & ACTIVE)) continue;
+
     if (_flags[i] & SPRITE) 
     {
       DrawRectangle(_x[i], _y[i], _w[i], _h[i], _color[i]);
@@ -320,16 +385,16 @@ void game_loop()
 
 void input()
 {
-
-  if (IsKeyPressed(KEY_T))
+  if (IsKeyPressed(KEY_THREE))
   {
-    scene1;
+    scene_3;
   }
 
-  if (IsKeyPressed(KEY_R))
+  if (IsKeyPressed(KEY_TWO))
   {
-    scene2;
+    scene_2;
   }
+
 
   if (IsKeyDown(KEY_C))
   {
