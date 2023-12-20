@@ -175,6 +175,8 @@ Map        map;
 #define  MUSIC_2 "assets/music/2.mp3"
 #define  SOUND_1 "assets/sounds/1.wav"
 #define   FONT_1 "assets/fonts/1.ttf"
+#define   FONT_2 "assets/fonts/2.ttf"
+#define   FONT_3 "assets/fonts/Minecraft.ttf"
 #define SHADER_1 "assets/shaders/test.frag"
 #define   TILE_1 "assets/textures/tileset_1.png"
 #define  LAYER_1 "assets/textures/layer_1.png"  
@@ -194,8 +196,6 @@ void clear_map()
 #define scene_2 do {\
   \
   clear_map();\
-  map.pixel_per_tile = 16;\
-  map.zoom = 3;\
   map.current = 2;\
   \
   map.tileset   = LoadTexture(TILE_1);\
@@ -220,8 +220,6 @@ void clear_map()
 #define scene_3 do {\
   \
   clear_map();\
-  map.pixel_per_tile = 16;\
-  map.zoom = 3;\
   map.current = 3;\
   \
   map.tileset   = LoadTexture(TILE_1);\
@@ -241,6 +239,9 @@ void clear_map()
 
 int main()
 {
+  map.zoom = 3;
+  map.pixel_per_tile = 16;
+
   SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE);
   InitAudioDevice();
@@ -252,7 +253,8 @@ int main()
   PlayMusicStream(music);
 
   fonts[0] = LoadFont(FONT_1);
-  // fonts[1] = LoadFont("assets/fonts/2.ttf");
+  fonts[1] = LoadFont(FONT_2);
+  fonts[2] = LoadFont(FONT_3);
 
   cam.zoom = 1.;
 
@@ -301,32 +303,44 @@ int main()
       }
 
       draw();
+      rlPushMatrix();
+          rlTranslatef(16 * map.zoom * 50, 16 * map.zoom * 50, 0);
+          rlRotatef(90, 1, 0, 0);
+          DrawGrid(100, 16 * map.zoom);
+      rlPopMatrix();
+
+      DrawTextEx(fonts[2], "Minecraft!", (Vector2){50 * map.zoom, 50 * map.zoom}, 16, 0, WHITE);
 
       EndMode2D();
       DrawFPS(5, 5);
 
       // UI
-      DrawText(
+      
+
+      DrawTextEx(
+        fonts[2],
         TextFormat("ACTIVE_ENTITIES=%d", ACTIVE_ENTITIES),
-        2., 
-        GetScreenHeight() - 24.F, 
+        (Vector2){ 2., GetScreenHeight() - 24.F }, 
         24.F, 
+        0,
         WHITE
       );
 
-      DrawText(
+      DrawTextEx(
+        fonts[2],
         TextFormat("LAST_FREE_INDEX=%d", LAST_FREE_INDEX), 
-        1., 
-        GetScreenHeight() - (24.F * 2.F), 
+        (Vector2) { 1.0, GetScreenHeight() - (24.F * 2.F) }, 
         24.F, 
+        0,
         WHITE
       );
 
-      DrawText(
+      DrawTextEx(
+        fonts[2],
         TextFormat("CURRENT_MAP=%d", map.current), 
-        1., 
-        GetScreenHeight() - (24.F * 3.F), 
+        (Vector2) { 1.0, GetScreenHeight() - (24.F * 3.F) }, 
         24.F, 
+        0.,
         WHITE
       );
       // UI
@@ -341,6 +355,7 @@ int main()
   UnloadMusicStream(music);
   UnloadFont(fonts[0]);
   UnloadFont(fonts[1]);
+  UnloadFont(fonts[2]);
   UnloadShader(shader);
 
   // Close
